@@ -2060,7 +2060,7 @@ class TiffWriter:
             planarconfig = enumarg(PLANARCONFIG, planarconfig)
         if predictor:
             if not isinstance(predictor, bool):
-                predictor = bool(enumarg(PREDICTOR, predictor))
+                predictor = enumarg(PREDICTOR, predictor)
         if extrasamples is not None:
             # TODO: deprecate non-sequence extrasamples
             extrasamples = tuple(
@@ -2106,7 +2106,7 @@ class TiffWriter:
             # JPEG2000: use J2K instead of JP2
             compressionargs['codecformat'] = 0  # OPJ_CODEC_J2K
 
-        if predictor:
+        if bool(predictor): #is bool() even necessary here?
             if compressiontag in TIFF.IMAGE_COMPRESSIONS:
                 # disable predictor for JPEG, JPEG2000, WEBP, PNG, JPEGXR, ...
                 predictor = False
@@ -2117,8 +2117,12 @@ class TiffWriter:
                     predictortag = 2
                     predictorfunc = TIFF.PREDICTORS[2]
             elif datadtype.kind == 'f':
-                predictortag = 3
-                predictorfunc = TIFF.PREDICTORS[3]
+                if predictor in (3, 34894, 34895): #getting a bit ugly, is there a better way to handle a bool predictor as 3?
+                    predictortag = predictor
+                    predictorfunc = TIFF.PREDICTORS[predictor]
+                else:
+                    predictortag = 3
+                    predictorfunc = TIFF.PREDICTORS[3]
             else:
                 raise ValueError(f'cannot apply predictor to {datadtype}')
 
